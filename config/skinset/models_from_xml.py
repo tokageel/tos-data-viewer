@@ -26,11 +26,11 @@ def find_all_files(directory):
                 yield os.path.join(root, f)
 
 
-def process_image(image, xmlFile):
+def process_image(image, xml_file):
     # <image>要素は他の要素を内包しない（must）
     if len(image) != 0:
         sys.stderr.write("{}: <image> has child tag (length={})\n".format(
-            xmlFile,
+            xml_file,
             len(image)
         ))
         return None
@@ -40,7 +40,7 @@ def process_image(image, xmlFile):
             or 'file' not in image.attrib.keys()
             or 'imgrect' not in image.attrib.keys()):
         sys.stderr.write("{}: <image> is invalid:{}\n".format(
-            xmlFile,
+            xml_file,
             image.attrib
         ))
         return None
@@ -64,7 +64,7 @@ def process_image(image, xmlFile):
             imgrect = image.attrib['imgrect'].split()
             if len(imgrect) != 4:
                 sys.stderr.write('{}: attribute "imgrect" is invalid format ({})\n'.format(
-                    xmlFile,
+                    xml_file,
                     image.attrib['imgrect']
                 ))
             else:
@@ -77,17 +77,17 @@ def process_image(image, xmlFile):
             pass
         else:
             sys.stderr.write('{}: <image> has unknown attribute (attr={})\n'.format(
-                xmlFile,
+                xml_file,
                 attr
             ))
             return None
 
-    dic.setdefault('source_path', re.sub(r'^' + xml_root_path + '/', '', xmlFile))
+    dic.setdefault('source_path', re.sub(r'^' + xml_root_path + '/', '', xml_file))
 
     return dic
 
 
-def process_imagelist(imagelist, xmlFile):
+def process_imagelist(imagelist, xml_file):
     images = []
 
     # <imagelist>要素は"category"属性をもっているかもしれない（may）
@@ -102,17 +102,55 @@ def process_imagelist(imagelist, xmlFile):
     for child in imagelist:
         # <imagelist>要素は<image>要素以外を内包しない（must）
         if child.tag == 'image':
-            image = process_image(child, xmlFile)
+            image = process_image(child, xml_file)
             if image:
                 image.setdefault('category', category)
                 images.append(image)
         else:
-            sys.stderr.write(xmlFile + ": not image in imagelist (tag=" + child.tag + ")\n")
+            sys.stderr.write(xml_file + ": not image in imagelist (tag=" + child.tag + ")\n")
 
     return images
 
 
-def process_skinset(skinset, xmlFile):
+def process_skinlist(skinlist, xml_file):
+    imgs = []
+
+    # <skinlist>要素は"category"属性をもつ（may）
+    category = 'None'
+    if 'category' in skinlist.attrib:
+        category = skinlist.attrib['category']
+
+    # <skinlist>要素は<skin>要素をもつ（may）
+    for skin in skinlist:
+        # <skin>要素は"name"属性をもつ（must）
+        skin_name = skin.attrib['name']
+        # <skin>要素は"texture"属性をもつ（must）
+        # xml内のファイルセパレータはバックスラッシュ（\）で記載される
+        texture = skin.attrib['texture'].replace('\\', os.sep)
+        # パスの先頭にファイルセパレータが記載されることがあるが、Model上では除去した形で格納する
+        texture = re.sub((r'^' + os.sep), '', texture)
+
+        # <skin>要素は<img>要素をもつ（may）
+        for img in skin:
+            # <img>要素は"name"属性をもつ（must）
+            name = img.attrib['name']
+            # <img>要素は"imgrect"属性をもつ（must）
+            if 'imgrect' in img.attrib:
+                imgs.append({
+                    'skin_category': category,
+                    'texture': texture,
+                    'skin_name': skin_name,
+                    'name': name,
+                    'imgrect': img.attrib['imgrect']
+                })
+            else:
+                # "imgrect"属性をもたないimgはエラーとして扱う
+                sys.stderr.write('{}:no imgrect {}/{}/{}\n'.format(xml_file, category, skin_name, name))
+
+    return imgs
+
+
+def process_skinset(skinset, xml_file):
     dic = {}
     # <skinset>要素は、下記の要素を0個以上内包する（may）
     # 下位以外の要素は内包しない（must）
@@ -124,13 +162,14 @@ def process_skinset(skinset, xmlFile):
     # - <layerlist>要素
     for child in skinset:
         if child.tag == 'skinlist':
-            # TODO:skinlist対応
+            for img in process_skinlist(child, xml_file):
+                dic.setdefault(child.tag, [])
+                dic[child.tag].append(img)
             pass
         elif child.tag == 'imagelist':
-            images = process_imagelist(child, xmlFile)
-            if len(images) > 0:
+            for img in process_imagelist(child, xml_file):
                 dic.setdefault(child.tag, [])
-                dic[child.tag].append(images)
+                dic[child.tag].append(img)
         elif child.tag == 'fontlist':
             # TODO:fontlist対応
             pass
@@ -145,7 +184,7 @@ def process_skinset(skinset, xmlFile):
             pass
         else:
             # 不明な子要素
-            sys.stderr.write(xmlFile + ':include unknown tag =' + child.tag + '\n')
+            sys.stderr.write(xml_file + ':include unknown tag =' + child.tag + '\n')
             continue
 
     return dic
@@ -153,6 +192,7 @@ def process_skinset(skinset, xmlFile):
 
 if __name__ == '__main__':
     all_images = []
+    all_skin_images = []
     for xml_file in find_all_files(xml_root_path):
         try:
             tree = ET.parse(xml_file)
@@ -179,17 +219,29 @@ if __name__ == '__main__':
             sys.stderr.write(xml_file + ':the root element is not have child\n')
             continue
 
-        # <skinset/imagelist/image>を収集
-        if 'imagelist' in skinset.keys():
-            for imageset in skinset['imagelist']:
-                for image in imageset:
+        for k in skinset:
+            if k == 'imagelist':
+                # <skinset/imagelist/image>を収集
+                for image in skinset[k]:
                     all_images.append(image)
+            elif k == 'skinlist':
+                # <skinset/skin/img>を収集
+                for image in skinset[k]:
+                    all_skin_images.append(image)
+            else:
+                sys.stderr.write('{}:unknown element "{}"\n', xml_file, k)
 
     # fixture用にデータを修飾する
     tmp_yaml = []
     for i, image in enumerate(all_images):
         tmp_yaml.append({
             'model': 'skinset.cropimage',
+            'pk': (i + 1),
+            'fields': image
+        })
+    for i, image in enumerate(all_skin_images):
+        tmp_yaml.append({
+            'model': 'skinset.skinimage',
             'pk': (i + 1),
             'fields': image
         })
