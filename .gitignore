@@ -1,3 +1,7 @@
+data/**
+config/skinset/fixture/
+config/static/skinset/**
+
 ### https://raw.github.com/github/gitignore/4a8e0a151becd5ccbb83e4aca6e6c195f3d506fd/Global/Windows.gitignore
 
 # Windows thumbnail cache files
@@ -33,7 +37,8 @@ $RECYCLE.BIN/
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*

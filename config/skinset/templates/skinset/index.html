@@ -1,0 +1,18 @@
+<h1>ToS Data Viewer</h1>
+
+<h2>categories</h2>
+{% if category_list %}
+    <ul>
+    {% for category in category_list %}
+        {% url 'skinset:list' category.category as the_url %}
+        <li>
+            <a href="{{the_url}}">
+                {{category.category}}
+            </a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No images are available.</p>
+{% endif %}
+
