@@ -1,63 +1,78 @@
-import re
-
 from PIL import Image
 from django.shortcuts import HttpResponse
 from django.shortcuts import render
 
-from .models import CropImage, SkinImage
+from .models import ImageCategory, Skin, CropImage
 
 
 def index(request):
-    category_list = CropImage.objects \
-        .values('category') \
-        .order_by('category') \
-        .distinct()
-    skin_list = SkinImage.objects\
-        .values('skin_category') \
-        .order_by('skin_category') \
-        .distinct()
+    """
+    indexのHttpResponseを返す.
+    :param request: HttpRequest.
+    :return: indexのHttpResponse.
+    """
+    image_categories = ImageCategory.objects.order_by('category')
+    skins = Skin.objects.order_by('category')
+
     context = {
-        'category_list': category_list,
-        'skin_list': skin_list
+        'image_categories': image_categories,
+        'skins': skins
     }
     return render(request, 'skinset/index.html', context)
 
 
-def list_image(request, category_name):
-    image_list = CropImage.objects.filter(category=category_name).order_by('file').all()
-    context = {'category_name': category_name,
-               'image_list': image_list}
-    return render(request, 'skinset/list_image.html', context)
+def list(request, kind, identifier):
+    """
+    各一覧画面のHttpResponseを返す.
+    :param request: HttpRequest.
+    :param kind: 表示するデータ種別. 'image', 'skin'のいずれか.
+    :param identifier: typeが'image'の場合はImageCategoryのID、'skin'の場合はSkinのID.
+    :return: 一覧画面のHttpResponse.
+    """
+    context = {}
+
+    if kind == 'image':
+        context = {
+            'image_list': CropImage.objects.filter(image_category=identifier).order_by('name'),
+            'category_name': ImageCategory.objects.get(id=identifier).category
+        }
+    elif kind == 'skin':
+        context = {
+            'image_list': CropImage.objects.filter(skin=identifier).order_by('name'),
+            'category_name': Skin.objects.get(id=identifier).name
+        }
+    else:
+        pass
+
+    return render(request, 'skinset/list.html', context)
 
 
-def list_skin(request, category_name):
-    image_list = SkinImage.objects.filter(skin_category=category_name).order_by('skin_name').all()
-    context = {'category_name': category_name,
-               'image_list': image_list}
-    return render(request, 'skinset/list_skin.html', context)
-
-
-def img(request):
-    im = Image.open('./static/ui.ipf/' + re.sub('^/skinset/img/', '', request.path))
+def image(request, path):
+    """
+    指定したパスに格納されているファイルを画像として扱い、画像をHttpResponseとして返す.
+    :param request: HttpRequest.
+    :param path: ファイルパス. ui.ipfからの相対パスとして指定する.
+    :return: 画像のHttpResponse.
+    """
+    im = Image.open('./static/skinset/ui.ipf/' + path)
     res = HttpResponse(content_type='image/png')
     im.save(res, 'PNG')
     return res
 
 
-def img_image(request, image_id):
-    record = CropImage.objects.filter(id=image_id).all()[0]
-    return crop_img(request, record.file, record.imgrect)
+def crop_image(request, identifier):
+    """
+    指定したCropImageのIDに対応する画像をHttpResponseとして返す.
+    :param request: HttpRequest.
+    :param identifier: CropImageのID.
+    :return: トリミング済み画像のHttpResponse.
+    """
+    record = CropImage.objects.filter(id=identifier)[0]
 
-
-def img_skin(request, skin_id):
-    record = SkinImage.objects.filter(id=skin_id).all()[0]
-    return crop_img(request, record.texture, record.imgrect)
-
-
-def crop_img(request, file, rect):
-    l, t, w, h = [int(s) for s in rect.split()]
-    im = Image.open('./static/skinset/ui.ipf/' + file)
+    l, t, w, h = [int(s) for s in record.imgrect.split()]
+    im = Image.open('./static/skinset/ui.ipf/' + record.file)
     im = im.crop((l, t, (l + w), (t + h)))
-    res = HttpResponse(content_type='image/png')
-    im.save(res, 'PNG')
-    return res
+    response = HttpResponse(content_type='image/png')
+    im.save(response, 'PNG')
+
+    return response

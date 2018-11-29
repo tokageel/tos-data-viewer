@@ -1,0 +1,10 @@
+<h1>{{ category_name }}</h1>
+<ul>
+{% for image in image_list %}
+    {% url 'skinset:crop_image' image.id as the_url %}
+    <li>{{ image.name }}<br><a href="{{ the_url }}"><img src="{{ the_url }}" alt="{{ image.file }}"/></a></li>
+{% empty %}
+    <li>No images are available.</li>
+{% endfor %}
+</ul>
+

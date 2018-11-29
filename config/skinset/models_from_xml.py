@@ -9,8 +9,9 @@ XMLファイルを元にFixtureを生成します.
 import os
 import re
 import sys
-import yaml
 import xml.etree.ElementTree as ET
+
+import yaml
 
 # 出力先YAMLファイル
 yaml_file_path = './fixture/master.yaml'
@@ -59,7 +60,7 @@ def process_image(image, xml_file):
             tmp_path = image.attrib['file'].replace('\\', os.sep)
             # パスの先頭にファイルセパレータが記載されることがあるが、Model上では除去した形で格納する
             tmp_path = re.sub((r'^' + os.sep), '', tmp_path)
-            dic.setdefault(attr,tmp_path)
+            dic.setdefault(attr, tmp_path)
             pass
         elif 'imgrect' == attr:
             # rect属性は4つのtuple（left, top, width, height）
@@ -83,8 +84,6 @@ def process_image(image, xml_file):
                 attr
             ))
             return None
-
-    dic.setdefault('source_path', re.sub(r'^' + xml_root_path + '/', '', xml_file))
 
     return dic
 
@@ -194,7 +193,12 @@ def process_skinset(skinset, xml_file):
 
 if __name__ == '__main__':
     all_images = []
-    all_skin_images = []
+
+    image_categories = {}
+    skin_categories = {}
+    skins = {}
+    crop_images = []
+
     for xml_file in find_all_files(xml_root_path):
         try:
             tree = ET.parse(xml_file)
@@ -221,37 +225,83 @@ if __name__ == '__main__':
             sys.stderr.write(xml_file + ':the root element is not have child\n')
             continue
 
+        source_path = re.sub(r'^' + xml_root_path + '/', '', xml_file)
         for k in skinset:
             if k == 'imagelist':
                 # <skinset/imagelist/image>を収集
                 for image in skinset[k]:
+                    # 画像ファイルの存在確認
                     img_file_path = os.path.join(img_root_path, image['file'])
                     if os.path.exists(img_file_path):
-                        all_images.append(image)
+                        # ImageCategory
+                        category = image['category']
+                        if category not in image_categories:
+                            image_categories.setdefault(category, len(image_categories) + 1)
+                        # CropImage
+                        crop_images.append({
+                            'name': image['name'],
+                            'imgrect': image['imgrect'],
+                            'file': image['file'],
+                            'source_path': source_path,
+                            'image_category': image_categories[category]
+                        })
                     else:
                         sys.stderr.write('{}: {} no such file\n'.format(xml_file, img_file_path))
             elif k == 'skinlist':
                 # <skinset/skin/img>を収集
                 for image in skinset[k]:
+                    # 画像ファイルの存在確認
                     img_file_path = os.path.join(img_root_path, image['texture'])
                     if os.path.exists(img_file_path):
-                        all_skin_images.append(image)
-                    else:
-                        sys.stderr.write('{}: {} no such texture\n'.format(xml_file, img_file_path))
+                        # SkinCategory
+                        category = image['skin_category']
+                        if category not in skin_categories:
+                            skin_categories.setdefault(category, len(skin_categories) + 1)
+                        # Skin
+                        skin_name = image['skin_name']
+                        if skin_name not in skins:
+                            skins.setdefault(skin_name, {
+                                'id': len(skins) + 1,
+                                'category_id': skin_categories[category],
+                            })
+                        # CropImage
+                        crop_images.append({
+                            'name': image['name'],
+                            'imgrect': image['imgrect'],
+                            'file': image['texture'],
+                            'source_path': source_path,
+                            'skin': skins[skin_name]['id']
+                        })
+
             else:
                 sys.stderr.write('{}:unknown element "{}"\n', xml_file, k)
 
     # fixture用にデータを修飾する
     tmp_yaml = []
-    for i, image in enumerate(all_images):
+    for category in image_categories:
+        tmp_yaml.append({
+            'model': 'skinset.imagecategory',
+            'pk': image_categories[category],
+            'fields': {'category': category}
+        })
+    for category in skin_categories:
+        tmp_yaml.append({
+            'model': 'skinset.skincategory',
+            'pk': skin_categories[category],
+            'fields': {'category': category}
+        })
+    for skin in skins:
+        tmp_yaml.append({
+            'model': 'skinset.skin',
+            'pk': skins[skin]['id'],
+            'fields': {
+                'name': skin,
+                'category': skins[skin]['category_id']
+            }
+        })
+    for i, image in enumerate(crop_images):
         tmp_yaml.append({
             'model': 'skinset.cropimage',
-            'pk': (i + 1),
-            'fields': image
-        })
-    for i, image in enumerate(all_skin_images):
-        tmp_yaml.append({
-            'model': 'skinset.skinimage',
             'pk': (i + 1),
             'fields': image
         })
@@ -259,4 +309,3 @@ if __name__ == '__main__':
     # YAML出力
     with open(yaml_file_path, 'w') as out:
         yaml.dump(tmp_yaml, stream=out, default_flow_style=False)
-

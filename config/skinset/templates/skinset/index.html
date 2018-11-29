@@ -1,33 +1,29 @@
 <h1>ToS Data Viewer</h1>
 
-<h2>categories</h2>
-{% if category_list %}
-    <ul>
-    {% for category in category_list %}
-        {% url 'skinset:list_image' category.category as the_url %}
-        <li>
-            <a href="{{the_url}}">
-                {{category.category}}
-            </a>
-        </li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No images are available.</p>
-{% endif %}
+<h2>Images</h2>
+<ul>
+{% for category in image_categories %}
+    {% url 'skinset:list' 'image' category.id as the_url %}
+    <li><a href="{{ the_url }}">{{ category.category }}</a></li>
+{% empty %}
+    <li>empty</li>
+{% endfor %}
+</ul>
 
-<h2>skins</h2>
-{% if skin_list %}
+<h2>Skins</h2>
+<ul>
+{% regroup skins by category.category as skins_by_category %}
+{% for category, skins in skins_by_category %}
+    <li>{{ category }}</li>
     <ul>
-    {% for skin in skin_list %}
-        {% url 'skinset:list_skin' skin.skin_category as the_url %}
-        <li>
-            <a href="{{the_url}}">
-                {{skin.skin_category}}
-            </a>
-        </li>
-    {% endfor %}
+        {% for skin in skins %}
+            {% url 'skinset:list' 'skin' skin.id as the_url %}
+            <li><a href="{{ the_url }}">{{ skin.name }}</a></li>
+        {% endfor %}
     </ul>
-{% else %}
-    <p>No images are available.</p>
-{% endif %}
+{% empty %}
+    <li>empty</li>
+{% endfor %}
+</ul>
+
+
