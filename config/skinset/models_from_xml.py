@@ -16,6 +16,8 @@ import xml.etree.ElementTree as ET
 yaml_file_path = './fixture/master.yaml'
 # XMLファイル格納場所
 xml_root_path = '../../data'
+# 画像ファイル格納場所
+img_root_path = '../static/skinset/ui.ipf'
 
 
 def find_all_files(directory):
@@ -223,11 +225,19 @@ if __name__ == '__main__':
             if k == 'imagelist':
                 # <skinset/imagelist/image>を収集
                 for image in skinset[k]:
-                    all_images.append(image)
+                    img_file_path = os.path.join(img_root_path, image['file'])
+                    if os.path.exists(img_file_path):
+                        all_images.append(image)
+                    else:
+                        sys.stderr.write('{}: {} no such file\n'.format(xml_file, img_file_path))
             elif k == 'skinlist':
                 # <skinset/skin/img>を収集
                 for image in skinset[k]:
-                    all_skin_images.append(image)
+                    img_file_path = os.path.join(img_root_path, image['texture'])
+                    if os.path.exists(img_file_path):
+                        all_skin_images.append(image)
+                    else:
+                        sys.stderr.write('{}: {} no such texture\n'.format(xml_file, img_file_path))
             else:
                 sys.stderr.write('{}:unknown element "{}"\n', xml_file, k)
 
