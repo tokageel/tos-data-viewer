@@ -4,7 +4,7 @@
 {% if category_list %}
     <ul>
     {% for category in category_list %}
-        {% url 'skinset:list' category.category as the_url %}
+        {% url 'skinset:list_image' category.category as the_url %}
         <li>
             <a href="{{the_url}}">
                 {{category.category}}
@@ -16,3 +16,18 @@
     <p>No images are available.</p>
 {% endif %}
 
+<h2>skins</h2>
+{% if skin_list %}
+    <ul>
+    {% for skin in skin_list %}
+        {% url 'skinset:list_skin' skin.skin_category as the_url %}
+        <li>
+            <a href="{{the_url}}">
+                {{skin.skin_category}}
+            </a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No images are available.</p>
+{% endif %}

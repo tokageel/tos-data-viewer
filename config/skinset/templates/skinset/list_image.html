@@ -2,7 +2,7 @@
 {% if image_list %}
     <ul>
     {% for image in image_list %}
-        <li>{{image.name}}<img src="{% url 'skinset:dbimg' image.id %}" alt="{{image.file}}"/></a></li>
+        <li>{{image.name}}<img src="{% url 'skinset:img_image' image.id %}" alt="{{image.file}}"/></a></li>
     {% endfor %}
     </ul>
 {% else %}
