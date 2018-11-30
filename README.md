@@ -73,7 +73,7 @@ python3 manage.py runserver 8000
 ## 使い方
 ブラウザでlocalhost:8000へアクセスすると、一覧画面が表示されます.
 
-![イメージ](./res/img_index.png)
+<img src="./res/img_index.png" width="25%">
 
 ## 免責事項
 ご利用は自己責任でお願いします.
