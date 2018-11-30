@@ -13,10 +13,13 @@ def index(request):
     """
     image_categories = ImageCategory.objects.order_by('category')
     skins = Skin.objects.order_by('category')
+    skin_files = CropImage.objects.filter(skin__isnull=False) \
+        .values('file').order_by('file').distinct()
 
     context = {
         'image_categories': image_categories,
-        'skins': skins
+        'skins': skins,
+        'skin_files': skin_files
     }
     return render(request, 'skinset/index.html', context)
 
@@ -46,6 +49,20 @@ def list(request, kind, identifier):
 
     return render(request, 'skinset/list.html', context)
 
+
+def by_image(request, image_path):
+    """
+    指定した画像ファイルを参照しているSkinの一覧を表示するViewを返す.
+    :param request: HttpRequest.
+    :param image_path: 画像ファイルのパス.
+    :return: Skin一覧を表示するView.
+    """
+    context = {
+        'path': image_path,
+        'crop_image_list': CropImage.objects.filter(file=image_path).filter(skin__isnull=False).order_by('skin')
+    }
+
+    return render(request, 'skinset/by-image.html', context)
 
 def image(request, path):
     """

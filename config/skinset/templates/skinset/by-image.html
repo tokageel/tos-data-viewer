@@ -1,0 +1,34 @@
+{% load static %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+
+<h1>{{ path }}</h1>
+
+<h2>Full image</h2>
+{% url 'skinset:img' path as the_url %}
+<a href="{{ the_url }}"><img src="{{ the_url }}" alt="{{ path }}" width="50%"/></a>
+
+<h2>Referenced</h2>
+<ul>
+    {% regroup crop_image_list by category.category as skins_by_category %}
+    {% for category, skins in skins_by_category %}
+    <li>Category: {{ category }}</li>
+    <ul>
+        {% regroup skins by skin.name as skins_by_name %}
+        {% for name, skins in skins_by_name %}
+        <li>Name: {{ name }}</li>
+        <ul>
+            {% for crop_image in skins %}
+            {% url 'skinset:crop_image' crop_image.id as the_url %}
+            <li>
+                {{ crop_image.name }}<br>
+                <a href="{{ the_url }}"><img src="{{ the_url }}" alt="{{ path }}"/></a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endfor %}
+    </ul>
+    {% empty %}
+    <li>empty</li>
+    {% endfor %}
+</ul>

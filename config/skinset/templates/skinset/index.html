@@ -6,28 +6,36 @@
 
 <h2>Images</h2>
 <ul>
-{% for category in image_categories %}
+    {% for category in image_categories %}
     {% url 'skinset:list' 'image' category.id as the_url %}
     <li><a href="{{ the_url }}">{{ category.category }}</a></li>
-{% empty %}
+    {% empty %}
     <li>empty</li>
-{% endfor %}
+    {% endfor %}
 </ul>
 
 <h2>Skins</h2>
 <ul>
-{% regroup skins by category.category as skins_by_category %}
-{% for category, skins in skins_by_category %}
+    {% regroup skins by category.category as skins_by_category %}
+    {% for category, skins in skins_by_category %}
     <li>{{ category }}</li>
     <ul>
         {% for skin in skins %}
-            {% url 'skinset:list' 'skin' skin.id as the_url %}
-            <li><a href="{{ the_url }}">{{ skin.name }}</a></li>
+        {% url 'skinset:list' 'skin' skin.id as the_url %}
+        <li><a href="{{ the_url }}">{{ skin.name }}</a></li>
         {% endfor %}
     </ul>
-{% empty %}
+    {% empty %}
     <li>empty</li>
-{% endfor %}
+    {% endfor %}
 </ul>
 
-
+<h2>Skins (group by file)</h2>
+<ul>
+    {% for skin in skin_files %}
+    {% url 'skinset:by_image' skin.file as the_url %}
+    <li><a href="{{ the_url }}">{{ skin.file }}</a></li>
+    {% empty %}
+    <li>empty</li>
+    {% endfor %}
+</ul>

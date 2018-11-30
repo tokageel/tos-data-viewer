@@ -7,5 +7,6 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('list/<kind>/<int:identifier>', views.list, name='list'),
     path('crop/<int:identifier>', views.crop_image, name='crop_image'),
+    path('by-image/<path:image_path>', views.by_image, name='by_image'),
     path('img/<path:path>', views.image, name='img'),
 ]
