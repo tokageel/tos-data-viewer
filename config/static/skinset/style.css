@@ -1,0 +1,27 @@
+h1 {
+    font-size: 1.5em;
+}
+h2 {
+    font-size: 1.2em;
+}
+
+li {
+    font-size: 0.8em;
+}
+
+ul {
+  	margin-left: 0.5em;
+  	margin-right: 0.5em;
+  	padding: 0.5em;
+    border: 1px green dashed;
+    background-color: #f5fff1;
+}
+
+ul li {
+    margin-left: 0em;
+    list-style-type: none;
+}
+
+ul li a {
+    color: green;
+}
