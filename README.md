@@ -49,29 +49,29 @@ cp -r [ui.ipfの格納場所] tos-data-viewer/static/skinset
 
 ```bash
 cd tos-data-viewer/config
-python3 manage.py makemigrations
-python3 manage.py migrate
+python manage.py makemigrations
+python manage.py migrate
 ```
 
 XMLからFixtureを作成します.
 ```bash
 cd skinset
-python3 models_from_xml.py
+python models_from_xml.py
 cd ..
 ```
 
 Fixtureを適用します.
 ```bash
-python3 manage.py loaddata skinset/fixture/master.yaml
+python manage.py loaddata skinset/fixture/master.yaml
 ```
 
 ## 起動
 ```bash
-python3 manage.py runserver 8000
+python manage.py runserver 8000
 ```
 
 ## 使い方
-ブラウザでlocalhost:8000へアクセスすると、一覧画面が表示されます.
+ブラウザで http://localhost:8000/skinset へアクセスすると、一覧画面が表示されます.
 
 <img src="./res/img_index.png" width="25%">
 
