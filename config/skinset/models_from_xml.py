@@ -56,10 +56,11 @@ def process_image(image, xml_file):
             dic.setdefault(attr, image.attrib[attr])
             pass
         elif 'file' == attr:
-            # xml内のファイルセパレータはバックスラッシュ（\）で記載される
-            tmp_path = image.attrib['file'].replace('\\', os.sep)
+            tmp_path = image.attrib['file']
             # パスの先頭にファイルセパレータが記載されることがあるが、Model上では除去した形で格納する
-            tmp_path = re.sub((r'^' + os.sep), '', tmp_path)
+            tmp_path = re.sub(r'^\\', '', tmp_path)
+            # xml内のファイルセパレータはバックスラッシュ（\）で記載される
+            tmp_path = tmp_path.replace('\\', os.sep)
             dic.setdefault(attr, tmp_path)
             pass
         elif 'imgrect' == attr:
@@ -126,10 +127,11 @@ def process_skinlist(skinlist, xml_file):
         # <skin>要素は"name"属性をもつ（must）
         skin_name = skin.attrib['name']
         # <skin>要素は"texture"属性をもつ（must）
-        # xml内のファイルセパレータはバックスラッシュ（\）で記載される
-        texture = skin.attrib['texture'].replace('\\', os.sep)
+        texture = skin.attrib['texture']
         # パスの先頭にファイルセパレータが記載されることがあるが、Model上では除去した形で格納する
-        texture = re.sub((r'^' + os.sep), '', texture)
+        texture = re.sub(r'^\\', '', texture)
+        # xml内のファイルセパレータはバックスラッシュ（\）で記載される
+        texture = texture.replace('\\', os.sep)
 
         # <skin>要素は<img>要素をもつ（may）
         for img in skin:
